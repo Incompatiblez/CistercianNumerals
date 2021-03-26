@@ -8,6 +8,7 @@
         <script src="js/game.js" charset="utf-8"></script>
 
         <script id="standardVertexShader" type="x-shader/x-vertex">
+            //Vertex Shader doesn't do a whole lot
             attribute vec2 a_vertex;
 
             uniform mat4 u_projection;
@@ -19,8 +20,11 @@
 
             void main() {
                 gl_Position = u_projection * vec4(a_vertex + u_position, 0.0, 1.0);
+
+                //Flip the Y axis since our texture is upside-down.
                 v_tex = a_vertex;
                 v_tex.y = 1.0 - v_tex.y;
+
                 v_quadVals = u_quadVals;
             }
         </script>
@@ -35,22 +39,24 @@
             varying vec2 v_tex;
             varying vec4 v_quadVals;
 
+            //This is where all the magic happens
             void main() {
                 float num;
                 float xOff;
                 float yOff;
                 vec2 texCoord;
 
-                //Numeric Base
+                //Get the numeric base image
                 vec4 col = texture2D(u_texture, v_tex / u_texSize);
-                //Quadrant 1 - Singles
+
+                //Add on the Quadrant 1 (Singles) image
                 num = v_quadVals.x;
                 xOff = mod(num, u_texSize) / u_texSize;
                 yOff = floor(num / u_texSize)  / u_texSize;
                 texCoord = v_tex;
                 col = col + texture2D(u_texture, texCoord / u_texSize + vec2(xOff, yOff));
 
-                //Quadrant 2 - Tens
+                //Add on the Quadrant 2 (Tens) image
                 num = v_quadVals.y;
                 xOff = mod(num, u_texSize) / u_texSize;
                 yOff = floor(num / u_texSize)  / u_texSize;
@@ -58,7 +64,7 @@
                 texCoord.x = 1.0 - texCoord.x;
                 col = col + texture2D(u_texture, texCoord / u_texSize + vec2(xOff, yOff));
 
-                //Quadrant 3 - Hundreds
+                //Add on the Quadrant 3 (Hundreds) image
                 num = v_quadVals.z;
                 xOff = mod(num, u_texSize) / u_texSize;
                 yOff = floor(num / u_texSize)  / u_texSize;
@@ -66,7 +72,7 @@
                 texCoord.y = 1.0 - texCoord.y;
                 col = col + texture2D(u_texture, texCoord / u_texSize + vec2(xOff, yOff));
 
-                //Quadrant 4 - Thousands
+                //Add on the Quadrant 4 (Thousands) image
                 num = v_quadVals.w;
                 xOff = mod(num, u_texSize) / u_texSize;
                 yOff = floor(num / u_texSize)  / u_texSize;
@@ -76,6 +82,7 @@
                 col = col + texture2D(u_texture, texCoord / u_texSize + vec2(xOff, yOff));
 
 
+                //We're not doing any fancy blending, just clamp the colors back down.
                 col = clamp(col, 0.0, 1.0);
 
                 gl_FragColor = col;

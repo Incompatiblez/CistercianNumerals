@@ -19,6 +19,8 @@ function ResizeCanvas(W, H) {
     Game.Canvas.height = H;
     Game.GL.viewport(0, 0, W, H);
 
+    //Create WebGL clip-space matrix
+    //Scale and translate the X/Y into values I want to work with
     var x = (1 / (W / 64)) * 2;
     var y = 2;
     Game.GL.uniformMatrix4fv(Game.u_projectionLoc, false, [
@@ -46,15 +48,18 @@ function InitWebGL(gl) {
     Game.u_texSizeLoc = gl.getUniformLocation(prog, "u_texSize");
 
 
-
     CreateVertexBuffer(gl, a_vertexLoc);
     CreateTextureSheet(gl);
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+    //Enable blending for our draw call so our alpha channel works.
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 }
 
+//Define the verticies of our quad
+//We'll never change our attribute buffer.
 function CreateVertexBuffer(gl, a_vertexLoc) {
     var data = [
         0, 0,
@@ -107,6 +112,7 @@ function CreaterShaderProgram(gl, vertex, fragment) {
     return program;
 }
 
+//Load all of our pictures and dynamically create a "spritesheet"
 function CreateTextureSheet() {
     Game.ImagesLoading = 0;
     for (var k = 0; k < 10; k++) {
@@ -143,9 +149,16 @@ function CheckImageLoading() {
     var gl = Game.GL;
     var numImg = Game.Images.length;
 
+    //Calculate how much space we need in our Spritesheet
+    //Basically if we have 10 pictures, how big of an x by x grid do we need?
+    //To the nearest power of 2 though...
+    //4 images fit in a 2x2
+    //16 fit in a 4x4 <---- this one, thanks math!
+    //64 fit in a 8x8... so on.
     Game.TexSize = Math.pow(2, Math.ceil(Math.log2(Math.sqrt(numImg))));
     gl.uniform1f(Game.u_texSizeLoc, Game.TexSize);
 
+    //Create the full size texture that will fit all our images
     var texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
@@ -155,6 +168,7 @@ function CheckImageLoading() {
 
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, Game.TexSize * imgSize, Game.TexSize * imgSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
+    //Fill the "spritesheet" with all our images at their offsets.
     for (var k = 0; k < numImg; k++) {
         var thisObj = Game.Images[k];
         var num = thisObj[0];
@@ -170,7 +184,7 @@ function CheckImageLoading() {
 }
 
 
-
+//Bunch of dumb stuff
 var num = 1;
 var nextTick = 0;
 var numStep = 1;
@@ -184,11 +198,15 @@ function RenderFrame() {
     var numDigits = Math.ceil(Math.log(num) / Math.log(10000));
     var thisDigit = num;
     for (var k = 0; k < numDigits; k++) {
-        var d1 = Math.floor(thisDigit % 10);
-        var d2 = Math.floor(thisDigit / 10) % 10;
-        var d3 = Math.floor(thisDigit / 100) % 10;
-        var d4 = Math.floor(thisDigit / 1000) % 10;
+        //Calculate what number for each quadrant
+        var d1 = Math.floor(thisDigit % 10); //Singles
+        var d2 = Math.floor(thisDigit / 10) % 10; //Tens
+        var d3 = Math.floor(thisDigit / 100) % 10; //Hundreds
+        var d4 = Math.floor(thisDigit / 1000) % 10; //Thousands
 
+        //We let the GPU do most of the work
+        //Send the position offset uniform and the quadrant digits
+        //Draw our quad and let the Fragment shader do it's magic
         Game.GL.uniform2f(Game.u_positionLoc, numDigits - k - 1, 0);
         Game.GL.uniform4f(Game.u_quadValsLoc, d1, d2, d3, d4);
         Game.GL.drawArrays(Game.GL.TRIANGLES, 0, 6);
@@ -196,6 +214,7 @@ function RenderFrame() {
         thisDigit /= 10000;
     }
 
+    //Also display our number normally to unfuckify the brain.
     document.getElementById("NumericDisplay").innerHTML = num.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
 
     var dNow = Date.now();
@@ -212,5 +231,9 @@ function IncreaseNumber(btn) {
 
 function IncreaseTickrate(btn) {
     tickRate = Math.round(tickRate * 0.9);
+    if (tickRate < 16) {
+        tickRate = 16;
+        btn.disabled = true;
+    }
     btn.innerHTML = `Increase speed (${tickRate}ms)`;
 }
