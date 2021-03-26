@@ -3,7 +3,7 @@ Game.Images = [];
 
 function InitGame() {
     Game.Canvas = document.getElementById("canvas_numeralDisplay");
-    Game.GL = Game.Canvas.getContext("webgl");
+    Game.GL = Game.Canvas.getContext("webgl", {preserveDrawingBuffer: true});
     if (!Game.GL) {
         console.log("WebGL unsupported!");
         return;
@@ -236,4 +236,13 @@ function IncreaseTickrate(btn) {
         btn.disabled = true;
     }
     btn.innerHTML = `Increase speed (${tickRate}ms)`;
+}
+
+function TakePicture() {
+    var picDiv = document.getElementById("pictureTaker");
+    picDiv.innerHTML = "";
+
+    var img = new Image();
+    img.src = Game.Canvas.toDataURL();
+    picDiv.appendChild(img);
 }
