@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>Cisterian Numeral</title>
+
+        <link rel="stylesheet" href="css/style.css">
+        <script src="js/game.js" charset="utf-8"></script>
+
+        <script id="standardVertexShader" type="x-shader/x-vertex">
+            attribute vec2 a_vertex;
+
+            uniform mat4 u_projection;
+            uniform vec2 u_position;
+            uniform vec4 u_quadVals;
+
+            varying vec2 v_tex;
+            varying vec4 v_quadVals;
+
+            void main() {
+                gl_Position = u_projection * vec4(a_vertex + u_position, 0.0, 1.0);
+                v_tex = a_vertex;
+                v_tex.y = 1.0 - v_tex.y;
+                v_quadVals = u_quadVals;
+            }
+        </script>
+
+
+        <script id="standardFragmentShader" type="x-shader/x-fragment">
+            precision highp float;
+
+            uniform sampler2D u_texture;
+            uniform float u_texSize;
+
+            varying vec2 v_tex;
+            varying vec4 v_quadVals;
+
+            void main() {
+                float num;
+                float xOff;
+                float yOff;
+                vec2 texCoord;
+
+                //Numeric Base
+                vec4 col = texture2D(u_texture, v_tex / u_texSize);
+                //Quadrant 1 - Singles
+                num = v_quadVals.x;
+                xOff = mod(num, u_texSize) / u_texSize;
+                yOff = floor(num / u_texSize)  / u_texSize;
+                texCoord = v_tex;
+                col = col + texture2D(u_texture, texCoord / u_texSize + vec2(xOff, yOff));
+
+                //Quadrant 2 - Tens
+                num = v_quadVals.y;
+                xOff = mod(num, u_texSize) / u_texSize;
+                yOff = floor(num / u_texSize)  / u_texSize;
+                texCoord = v_tex;
+                texCoord.x = 1.0 - texCoord.x;
+                col = col + texture2D(u_texture, texCoord / u_texSize + vec2(xOff, yOff));
+
+                //Quadrant 3 - Hundreds
+                num = v_quadVals.z;
+                xOff = mod(num, u_texSize) / u_texSize;
+                yOff = floor(num / u_texSize)  / u_texSize;
+                texCoord = v_tex;
+                texCoord.y = 1.0 - texCoord.y;
+                col = col + texture2D(u_texture, texCoord / u_texSize + vec2(xOff, yOff));
+
+                //Quadrant 4 - Thousands
+                num = v_quadVals.w;
+                xOff = mod(num, u_texSize) / u_texSize;
+                yOff = floor(num / u_texSize)  / u_texSize;
+                texCoord = v_tex;
+                texCoord.x = 1.0 - texCoord.x;
+                texCoord.y = 1.0 - texCoord.y;
+                col = col + texture2D(u_texture, texCoord / u_texSize + vec2(xOff, yOff));
+
+
+                col = clamp(col, 0.0, 1.0);
+
+                gl_FragColor = col;
+            }
+        </script>
+    </head>
+    <body onload="InitGame();">
+        <div class="panel">
+            <canvas id="canvas_numeralDisplay"></canvas>
+            <label id="NumericDisplay">0</label>
+
+            <button type="button" onclick="IncreaseNumber(this);">Increase number +1 (1)</button>
+            <button type="button" onclick="IncreaseTickrate(this);">Increase speed (1000ms)</button>
+        </div>
+    </body>
+</html>
