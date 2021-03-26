@@ -185,9 +185,9 @@ function CheckImageLoading() {
 
 
 //Bunch of dumb stuff
-var num = 1;
+var num = 0;
 var nextTick = 0;
-var numStep = 1;
+var numStep = 0;
 var tickRate = 1000;
 
 function RenderFrame() {
@@ -195,7 +195,7 @@ function RenderFrame() {
 
     Game.GL.clear(Game.GL.COLOR_BUFFER_BIT);
 
-    var numDigits = Math.ceil(Math.log(num) / Math.log(10000));
+    var numDigits = Math.max(Math.ceil(Math.log(num) / Math.log(10000)),1);
     var thisDigit = num;
     for (var k = 0; k < numDigits; k++) {
         //Calculate what number for each quadrant
