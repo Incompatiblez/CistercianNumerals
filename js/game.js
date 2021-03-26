@@ -226,7 +226,7 @@ function RenderFrame() {
 
 function IncreaseNumber(btn) {
     numStep++;
-    btn.innerHTML = `Increase number +1 (${numStep})`;
+    btn.innerHTML = `Increase step +1 (${numStep})`;
 }
 
 function IncreaseTickrate(btn) {
